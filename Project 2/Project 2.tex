@@ -1,0 +1,760 @@
+\documentclass[a4paper, 12pt]{article}
+\usepackage[top=0.5in,left=0.5in,right=0.5in,bottom=0.5in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{setspace}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{caption}
+\usepackage{float}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=C++,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+\title{CS 341 - Programming Project 2}
+\author{Awnon K. Bhowmik}
+
+\renewcommand{\baselinestretch}{0.5}
+\begin{document}
+	\maketitle
+	
+	\begin{center}
+		\textbf{Analysis of Searching and Sorting Algorithms}
+		\noindent\rule{\textwidth}{1pt}
+	\end{center}
+	
+	\begin{flushleft}
+	For this project we are to compare the runtimes of different algorithms.
+	\end{flushleft}
+	
+	
+	\section*{Analysis of searching algorithms}
+	\begin{flushleft}
+	In this section we are to discuss and analyze the two well known searching algorithms \textbf{Linear Search}, also known as \textbf{Sequential Search} and \textbf{Binary Search}.
+	\end{flushleft}
+	
+	\subsection*{Linear Search Algorithm}
+	\begin{enumerate}
+		\item Given an array or list of $n$ elements, and a \textbf{target element} $x$.
+		\item Loop through the entire array one by one.
+		\item In each step, check whether the number in the list index matches the target element.
+		\item If a match is found, return the index where it was found
+		\item If no match found, return an appropriate index resembling it.
+	\end{enumerate}
+	
+		\subsection*{Binary Search Algorithm}
+	\begin{enumerate}
+		\item Given an array or list of $n$ elements, and a \textbf{target element} $x$.
+		\item Pick a central element, $$\text{Pivot or mid index}=\begin{cases}\dfrac{n}{2}&n=2k+1,k\in\mathbb{Z}\\\\\Bigg\lfloor\dfrac{n}{2}\Bigg\rfloor& n=2k,k\in\mathbb{Z}\end{cases}$$
+		\item In each step, check whether the number in the mid index matches the target element.
+		\item If the target element is to the left of the list at mid index, discard the right half, and work with the remaining left part. If the target element is to the right of the list at mid index, discard the left half, and work with the remaining right part.
+		\item If a match is found, function returns the mid index.
+		\item If no match found, return an appropriate index resembling it.
+	\end{enumerate}
+	
+	\pagebreak
+	\section*{Algorithm to analyze searching algorithm}
+	\begin{itemize}
+		\item In the program, we generate random numbers into a file, of search size $2^n$ where $n$ ranges from $1$ to $22$. This was done so we can have sufficient data which can be used to prove some results graphically. It is recommended to reduce this maximum value of $n$ to an appropriate integer if the processor is not strong enough to handle the computational and execution complexity.
+		\item Every time we read a file with a particular file size, we perform linear search and rewind the file using the code
+		\begin{lstlisting}
+			inFile.clear();
+			inFile.seekg(0,ios_base::beg);
+		\end{lstlisting}
+		
+		\item Record the execution time for every trial, and display it to the console screen. Instead of using clock() method from time.h we decided to use 
+		\begin{center}
+			\begin{lstlisting}
+				high_resolution_clock();
+			\end{lstlisting}
+		\end{center}
+		 method from chrono library
+		\item Exit the process
+	\end{itemize}
+	
+	\subsection*{The C++ code}
+	\begin{lstlisting}
+#include<iostream>
+#include<fstream>
+#include<vector>
+#include<algorithm>
+#include<chrono>
+#include<ctime>
+#include<random>
+#include<iomanip>
+#include<tuple>
+
+using namespace std;
+using namespace chrono;
+
+random_device rd;
+mt19937_64 mt(rd());
+uniform_int_distribution<> dist(0, (int)pow(10, 9));
+
+long long int ls_index;
+long long int bs_index;
+
+unsigned long long count_binary = 0;
+
+ifstream inFile;
+ofstream outFile;
+
+void fill_File(int size) {
+	outFile.open("numbers.txt", ios_base::trunc);
+
+	int i = 0;
+	while (i != size) {
+		outFile << dist(mt) << "\n";
+		i++;
+	}
+	outFile.close();
+}
+
+tuple<long long, unsigned long long>
+LinearSearch(vector<unsigned long long>vec, unsigned long long x) {
+	long long ls_index = -1;
+	unsigned long long count_linear = 0;
+	for (unsigned long long i = 0; i < vec.size(); i++) {
+		count_linear++;
+		if (vec[static_cast<size_t>(i)] == x) {
+			ls_index = i;
+			break;
+		}
+	}
+	return { ls_index,count_linear };
+}
+
+tuple<long long, unsigned long long>
+BinarySearch(vector<unsigned long long>vec,
+	unsigned long long low, unsigned long long high, unsigned long long x) {
+
+	while (low < high)
+	{
+		unsigned long long mid = (low + high) / 2;
+		count_binary++;
+		if (low <= mid || mid >= high) {
+			bs_index = -1;
+			return { bs_index,count_binary };
+		}
+		else if (x > vec[static_cast<size_t>(mid)])
+			return BinarySearch(vec, mid + 1, high, x);
+		else if (x < vec[static_cast<size_t>(mid)])
+			return BinarySearch(vec, low, mid - 1, x);
+		else {
+			bs_index = mid;
+			return { bs_index,count_binary };
+		}
+	}
+
+	return { -1,count_binary };
+}
+
+int main(int argc, char** argv) {
+	vector<unsigned long long>a;
+
+	inFile.open("numbers.txt");
+	outFile.open("numbers.txt");
+
+	if (!inFile || !outFile) {
+		cerr << "Error opening file";
+		return 0;
+	}
+
+	unsigned long long x, y;
+
+	cout << "Sequential Search\n\nFile Size\tNumber\tIndex\tTime\tNumber of steps\n";
+
+	double SumLinearSearch = 0;
+	for (int i = 1; i <= 22; i++) {
+
+		fill_File((int)pow(2, i));
+
+		a.clear();
+		while (!inFile.eof()) {
+			inFile >> x;
+			a.push_back(x);
+		}
+
+		//Clear the file and return pointer to beginning of file
+		inFile.clear();
+		inFile.seekg(0, ios_base::beg);
+
+		y = dist(mt);
+
+		long long ls_index;
+		unsigned long long ls_count;
+
+		auto t1 = high_resolution_clock::now();
+		tie(ls_index, ls_count) = LinearSearch(a, y);
+		auto t2 = high_resolution_clock::now();
+
+		duration<double, milli> diff = t2 - t1;
+		SumLinearSearch += diff.count();
+
+		cout << setw(7) << (int)pow(2, i) << setw(15) << y << "\t"
+			<< setw(3) << ls_index << setw(10) << SumLinearSearch << "\t" << setw(8) << ls_count << "\n";
+	}
+
+	cout << "\n\nBinary Search\n\nFile Size\tNumber\tIndex\tTime\tNumber of Steps\n";
+
+	double SumBinarySearch = 0;
+	for (int i = 1; i <= 22; i++) {
+
+		fill_File((int)pow(2, i));
+
+		a.clear();
+		while (!inFile.eof()) {
+			inFile >> x;
+			a.push_back(x);
+		}
+
+		unsigned long long low = 0;
+		unsigned long long high = a.size() - 1;
+
+		/*Notice that here in Binary Search, the function is written so
+		that the program always knows which index to search from, this
+		is why we don't need to rewind the file pointer to look for the
+		starting and ending point.*/
+
+		//Binary search requires the list to be sorted
+		sort(a.begin(), a.end());
+
+		y = dist(mt);
+
+		long long bs_index;
+		unsigned long long bs_count;
+
+		auto t3 = high_resolution_clock::now();
+		tie(bs_index, bs_count) = BinarySearch(a, low, high, y);
+		auto t4 = high_resolution_clock::now();
+
+		duration<double, milli>diff = t4 - t3;
+		SumBinarySearch += diff.count();
+
+		cout << setw(7) << (int)pow(2, i) << setw(15) << y << "\t"
+			<< setw(3) << bs_index << setw(12) << SumBinarySearch << "\t" << setw(5) << bs_count << "\n";
+	}
+
+	inFile.close();
+	outFile.close();
+	return 0;
+}
+	\end{lstlisting}
+	
+	\subsection*{Console Output}
+	\begin{flushleft}
+		Although the program gives the outputs in two separate tabular form, here we'll just compile them in the same table, so its easier to compare the execution times side by side. The time is calculated in milliseconds to increase accuracy.
+	\end{flushleft}
+	
+	\begin{table}[H]
+\begin{center}
+	\smallskip\noindent
+	\resizebox{\linewidth}{!}{%
+	\begin{tabular}{|ccccc|ccccc|}
+	\hline
+	\textbf{Linear Search} &&&&& \textbf{Binary Search}&&&&\\\hline
+	File & Number & Index & Time & Number of Steps & File & Number & Index & Time & Number of Steps\\
+	2 & 9841359 & -1 & 0.0259 & 1 & 2& 220816134 & -1 & 0.0063 & 1\\
+	4 & 209185955 & -1 & 0.0322 & 5 & 4 & 65795147 & -1 & 0.016 & 2\\
+	8 & 833708208 & -1 & 0.0382 & 9 & 8 & 572455325 & -1 & 0.0242 & 3\\
+	16 & 28128157 & -1 & 0.0439 & 17 & 16 & 771004053 & -1 & 0.0337 & 4\\
+	32 & 77150541 & -1 & 0.0524 & 33 & 32 & 356949669 & -1 & 0.0417 & 5\\
+	64 & 318270599 & -1 & 0.0609 & 65 & 64 & 958435947 & -1 & 0.0499 & 6\\
+	128 & 900729034 & -1 & 0.0726 & 129 & 128 & 990517142 & -1 & 0.0574 & 7\\
+	256 & 343936249 & -1 & 0.0967 & 257 & 256 & 212704272 & -1 & 0.063 & 8\\
+	512 & 516716010 & -1 & 0.1258 & 513 & 512 & 711782926 & -1 & 0.0708 & 9\\
+	1024 & 238693152 & -1 & 0.1807 & 1025 & 1024 & 505372654 & -1 & 0.0764 & 10\\
+	2048 & 739217550 & -1 & 0.282 & 2049 & 2048 & 747274833 & -1 & 0.0863 & 11\\
+	4096 & 789134060 & -1 & 0.5639 & 4097 & 4096 & 586656825 & -1 & 0.0916 & 12
+   \\
+	8192 & 166035152 & -1 & 1.0141 & 8193 & 8192 & 120870138 & -1 & 0.1264 & 13\\
+	16384 & 878034570 & -1 & 1.8205 & 16385 & 16384 & 163257089 & -1 & 0.132 & 14\\
+	32768 & 608754666 & -1 & 4.4571 & 32769 & 32768 & 491655710 & -1 & 0.1395 & 15\\
+	65536 & 694300027 & -1 & 9.5779 & 65537 & 65536 & 143486137 & -1 & 0.1709 & 16\\
+	131072 & 587529353 & -1 & 17.1452 & 131073 & 131072 & 193100266 & -1 & 0.1765 & 17\\
+	262144 & 695371951 & -1 & 33.4916 & 262145 & 262144 & 343569789 & -1 & 0.2117 & 18\\
+	524288 & 746253008 & -1 & 63.2732 & 524289 & 524288 & 701444084 & -1 & 0.2186 & 19\\
+	1048576 & 719565499 & -1 & 132.486 & 1048577 & 1048576 & 29506686 & -1 & 0.2244 & 20\\
+	2097152 & 204417884 & -1 & 264.879 & 2097153 & 2097152 & 184314335 & -1 & 0.2303 & 21\\
+	4194304 & 176233490 & -1 & 533.471 & 4194305 & 4194304 & 991881795 & -1 & 0.2358 & 22\\\hline
+	\end{tabular}}
+	\caption{Comparing Binary and Linear Search}\label{Table 1}
+\end{center}
+\end{table}
+	
+	\begin{flushleft}
+	If we notice closely, the steps of execution in Linear search is always $(n+1)$ and that of Binary search is $\log_2 n$. So it is proved that the time complexity of these algorithms are $O(n)$ and $O(\log n)$ respectively. This can also be supported with a graphical proof.
+	\end{flushleft}
+	
+	\pagebreak
+	\subsection*{Graphical Proof}
+	\begin{flushleft}
+		We make use of \textit{Wolfram Mathematica} to write the following script...
+	\end{flushleft}
+
+	\begin{center}
+		\includegraphics[scale=0.79]{"Linear Search".jpg}\captionof*{"Linear Search".jpg}{Fig 1. \textbf{Linear Search Complexity} $O(n)$}
+	\end{center}
+	
+	\begin{flushleft}
+		It is seen that the best fit closely resembles $$y=0.000126943x-0.0766146$$ which is a straight line
+	\end{flushleft}
+	
+	\begin{flushleft}
+	We repeat this process for the Binary Search algorithm, by writing the following script
+	\end{flushleft}
+	
+	\begin{center}
+		\includegraphics[scale=0.79]{"Binary Search".jpg}
+		\captionof*{"Linear Search".jpg}{Fig 2. \textbf{Binary Search Complexity} $O(\log n)$}
+	\end{center}
+	
+	\section*{Analysis of sorting algorithms}
+	In this section we will discuss and analyze a few well known sorting algorithms, and prove their computational complexity. It includes
+	\begin{itemize}
+		\item Bubble Sort $O(n^2)$
+		\item Insertion Sort $O(n^2)$
+		\item Merge Sort $O(n\log n)$
+	\end{itemize}
+	
+	\begin{flushleft}
+		We will once again generate a list of random numbers in files, and sort them, starting from a file size of 500 records and going upto 10,000 in steps of 500.
+	\end{flushleft}
+	
+	\noindent\rule{\textwidth}{1pt}
+	
+	\subsection*{The C++ code}
+	\begin{lstlisting}
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<fstream>
+#include<random>
+#include<chrono>
+#include<iomanip>
+
+using namespace std;
+using namespace chrono;
+
+ifstream inFile;
+ofstream outFile;
+
+random_device rd;
+mt19937_64 mt(rd());
+uniform_int_distribution<>dist(0, 1000);
+
+vector<unsigned long long>a;
+
+void fill_File(int size) {
+	outFile.open("numbers.txt", ios_base::trunc);
+
+	int i = 0;
+	while (i != size) {
+		outFile << dist(mt) << "\n";
+		i++;
+	}
+	outFile.close();
+}
+
+void reset() {
+	//clear the file and return pointer to the begining of file
+	inFile.clear();
+	inFile.seekg(0, ios_base::beg);
+}
+
+void BubbleSort(vector<unsigned long long> &vec) {
+	for (unsigned long long i = 0; i < vec.size(); i++) {
+		for (unsigned long long j = i + 1; j < vec.size(); j++) {
+			if (vec[static_cast<size_t>(j)] > vec[static_cast<size_t>(i)])
+				swap(vec[static_cast<size_t>(j)], vec[static_cast<size_t>(i)]);
+		}
+	}
+}
+
+void InsertionSort(vector<unsigned long long> &vec) {
+	unsigned long long key;
+	
+	for (unsigned long long i = 1; i < vec.size(); i++) {
+		key = vec[static_cast<size_t>(i)];
+		unsigned long long j = i;
+
+		while (static_cast<size_t>(j) > 0 && vec[static_cast<size_t>(j-1)] > key) {
+			vec[static_cast<size_t>(j)] = vec[static_cast<size_t>(j-1)];
+			j--;
+		}
+		vec[static_cast<size_t>(j)] = key;
+	}
+}
+
+void Merge(vector<unsigned long long>& vec, 
+	unsigned long long low, unsigned long long mid, unsigned long long high) {
+	//split from the middle
+	vector<unsigned long long>leftVec(static_cast<size_t>(mid - low + 1));
+	vector<unsigned long long>rightVec(static_cast<size_t>(high - mid));
+
+	//fill in the left list
+	for (size_t i = 0; i < leftVec.size(); i++)
+		leftVec[i] = vec[(size_t)(low + i)];
+
+	//fill in the right list
+	for (size_t i = 0; i < rightVec.size(); i++)
+		rightVec[i] = vec[(size_t)(mid + 1 + i)];
+
+	// initial indexes of first and second subarrays
+	unsigned long long leftIndex = 0, rightIndex = 0;
+
+	// the index we will start at when adding the subarrays back into the main array
+	unsigned long long currentIndex = low;
+
+	// compare each index of the subarrays adding the lowest value to the currentIndex
+	while (leftIndex < leftVec.size() && rightIndex < rightVec.size()) {
+		if (leftVec[(size_t)(leftIndex)] <= rightVec[(size_t)(rightIndex)]) {
+			vec[(size_t)(currentIndex)] = leftVec[(size_t)(leftIndex)];
+			leftIndex++;
+		}
+		else {
+			vec[(size_t)(currentIndex)] = rightVec[(size_t)(rightIndex)];
+			rightIndex++;
+		}
+		currentIndex++;
+	}
+
+	// copy remaining elements of leftArray[] if any
+	while (leftIndex < leftVec.size()) {
+		vec[(size_t)(currentIndex)] = leftVec[(size_t)(leftIndex)];
+		currentIndex++;
+		leftIndex++;
+	}
+
+	// copy remaining elements of rightArray[] if any
+	while (rightIndex < rightVec.size()) {
+		vec[(size_t)(currentIndex)] = rightVec[(size_t)(rightIndex)];
+		currentIndex++;
+		rightIndex++;
+	}
+}
+
+void MergeSort(vector<unsigned long long>& vec, 
+	unsigned long long low, unsigned long long high) {
+
+	//base case
+	if (low < high) {
+		unsigned long long mid = (low + high) / 2;
+
+		//sort left list
+		MergeSort(vec, low, mid);
+
+		//sort right list
+		MergeSort(vec, mid + 1, high);
+
+		//merge the lists
+		Merge(vec, low, mid, high);
+	}
+}
+
+int main() {
+	
+	inFile.open("numbers.txt");
+	outFile.open("numbers.txt");
+
+	if (!inFile || !outFile) {
+		cerr << "Error opening file!";
+		return 0;
+	}
+
+	unsigned long long x;
+
+	cout << "\t\t\t\tRuntime Analysis\n\nFile Size\tBubble Sort\tInsertion Sort\tMerge Sort\n";
+
+	double sumBubbleTime = 0;
+	double sumInsertionTime = 0;
+	double sumMergeTime = 0;
+
+	for (int i = 500; i < 10500; i += 500) {
+		//fill the file with random numbers
+		fill_File(i);
+
+		//Clear the vector to avoid errors. Then, copy the file contents into the vector. 
+		a.clear();
+		a.shrink_to_fit();
+		while (!inFile.eof()) {
+			inFile >> x;
+			a.push_back(x);
+		}
+
+		auto t1 = high_resolution_clock::now();
+		BubbleSort(a);
+		auto t2 = high_resolution_clock::now();
+
+		duration<double, milli>BubbleSortTime = t2 - t1;
+		sumBubbleTime += BubbleSortTime.count();
+
+		reset();
+
+		//Clear the vector to avoid errors. Then, copy the file contents into the vector. 
+		a.clear();
+		a.shrink_to_fit();
+		while (!inFile.eof()) {
+			inFile >> x;
+			a.push_back(x);
+		}
+
+		auto t3 = high_resolution_clock::now();
+		InsertionSort(a);
+		auto t4 = high_resolution_clock::now();
+
+		duration<double, milli>InsertionSortTime = t4 - t3;
+		sumInsertionTime += InsertionSortTime.count();
+
+		reset();
+
+		//Clear the vector to avoid errors. Then, copy the file contents into the vector. 
+		a.clear();
+		a.shrink_to_fit();
+		while (!inFile.eof()) {
+			inFile >> x;
+			a.push_back(x);
+		}
+
+		auto t5 = high_resolution_clock::now();
+		MergeSort(a, 0, a.size() - 1);
+		auto t6 = high_resolution_clock::now();
+
+		duration<double, milli>MergeSortTime = t6 - t5;
+		sumMergeTime += MergeSortTime.count();
+
+		reset();
+
+		//Clear the vector to avoid errors. Then, copy the file contents into the vector. 
+		a.clear();
+		a.shrink_to_fit();
+		while (!inFile.eof()) {
+			inFile >> x;
+			a.push_back(x);
+		}
+
+		cout << setw(5) << i << "\t\t" << sumBubbleTime << "\t\t"
+			<< setw(5) << sumInsertionTime << "\t\t"
+			<< setw(5) << sumMergeTime << endl;
+	}
+
+	inFile.close();
+	outFile.close();
+	return 0;
+}
+	\end{lstlisting}
+	
+	\subsection*{Console Output}
+	\begin{table}[H]
+		\begin{center}
+			\begin{tabular}{|cccc|}
+			\hline
+			&&Sorting Runtime Analysis&\\\hline File Size	& Bubble Sort &	Insertion Sort & Merge Sort\\
+500 &	0.0008 &	0.0002 &	0.0003\\
+1000 &	77.294 &	21.4154 &	10.5329\\
+1500 &	251.831 &	66.0683 &	24.2853\\
+2000 &	554.025 &	154.837 &	44.2544\\
+2500 &	1042.15 &	301.903 &	67.6642\\
+3000 &	1661 &	516.159 &	93.2231\\
+3500 &	2457 &	785.043 &	124.058\\
+4000 &	3445.9 &	1175.06 &	167.547\\
+4500 &	4686.53 &	1592.55 &	204.841\\
+5000 &	6212.53 &	2112.84 &	244.192\\
+5500 &	7977.05	& 2748.5 &	286.268\\
+6000 &	9995.66	& 3438.55 &	331.047\\
+6500 &	12460.8	& 4291.67 &	383.471\\
+7000 &	15075	& 5250.65 &	435.02 \\
+7500 &	18180.7	& 6407.42 &	494.877\\
+8000 &	21653.8	& 7671.78 &	554.119\\
+8500 &	25586.2	& 9126.32 &	632.068\\
+9000 &	29907.5	& 10839.5 &	699.509\\
+9500 &	34887.4	& 12568.8 &	781.592\\
+10000 &	40197.6	& 14580.3 &	856.207\\\hline
+ 
+			\end{tabular}
+			\caption{Comparing execution time of various sorting algorithms}\label{Table 2}
+		\end{center}
+	\end{table}
+	
+	\subsection*{A few more scripts}
+	\begin{center}
+		\includegraphics[scale=0.9]{"BubbleSort".jpg}\captionof*{"BubbleSort".jpg}{Fig 3. \textbf{Bubble Sort Complexity} $O(n^2)$}
+	\end{center}
+	
+	\begin{center}
+		\includegraphics[scale=0.9]{"InsertionSort".jpg}\captionof*{"InsertionSort".jpg}{Fig 4. \textbf{Insertion Sort Complexity} $O(n^2)$}
+	\end{center}
+	
+	\begin{center}
+		\includegraphics[scale=0.9]{"MergeSort".jpg}\captionof*{"MergeSort".jpg}{Fig 5. \textbf{Merge Sort Complexity} $O(n\log n)$}		
+	\end{center}
+	
+	\begin{center}
+		\includegraphics[scale=0.9]{"SortComplexityComparison".jpg}\captionof*{"SortComplexityComparison".jpg}{Fig 6. \textbf{Complexity comparison of sorting algorithms}}		
+	\end{center}
+
+\section*{Analysis of recursive functions}
+\noindent\rule{\textwidth}{1pt}
+\begin{itemize}
+	\item Recursive Fibonacci
+\end{itemize}
+\subsection*{The C++ code}
+\begin{lstlisting}
+#include<iostream>
+#include<iomanip>
+#include<chrono>
+using namespace std;
+using namespace chrono;
+
+unsigned long long fibonacci(int n) {
+	if (n == 0 || n == 1)
+		return 1;
+	else
+		return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+int main() {
+	unsigned long long int fib;
+	int n = 5;
+
+	double sumFibTime = 0;
+	cout << "Input Size\tFinal Value\tTime Taken\n";
+
+	for (int i = 0; i < 8; i++) {
+		auto t1 = high_resolution_clock::now();
+		fib = fibonacci(n);
+		auto t2 = high_resolution_clock::now();
+		duration<double, milli>diff = t2 - t1;
+		sumFibTime += diff.count();
+
+		cout << setw(5) << n << "\t\t" << setw(9) << fib << "\t" << setw(7) << sumFibTime << endl;
+		n += 5;
+	}
+	return 0;
+}
+\end{lstlisting}
+\subsection*{Console Output}
+\begin{table}[H]
+	\begin{center}
+		\begin{tabular}{|c|c|c|}
+		\hline
+			Input Size  &    Final Value  &   Time Taken\\\hline
+    5       &            8   &     0.0012\\
+   10       &           89   &      0.008\\
+   15        &         987   &     0.0732\\
+   20       &        10946   &     0.5225\\
+   25       &       121393   &     6.3224\\
+   30       &      1346269   &    65.3044\\
+   35        &    14930352   &    822.435\\
+   40        &   165580141   &    8249.97\\\hline
+		\end{tabular}\caption{Recursive Fibonacci Time Analysis}\label{Table 3}
+	\end{center}
+\end{table}
+
+\subsection*{Graphical Evidence}
+\begin{flushleft}
+A graph of input size vs execution time, shows a exponential pattern. It is actually of the order $O(2^n)$. The following script generates the graph.
+\end{flushleft}
+
+\begin{center}
+		\includegraphics{"Recursive Fibonacci".jpg}
+		\captionof*{"Recursive Fibonacci".jpg}{Fig 7. \textbf{Recursive Fibonacci Complexity} $O(2^n)$}
+	\end{center}
+	
+	\noindent\rule{\textwidth}{1pt}
+	\begin{itemize}
+		\item Recursive factorial
+	\end{itemize}
+	
+	\pagebreak
+	\subsection*{The C++ code}
+	\begin{lstlisting}
+#include<iostream>
+#include<iomanip>
+#include<chrono>
+using namespace std;
+using namespace chrono;
+
+unsigned long long factorial(int n) {
+	if (n == 0 || n == 1)
+		return 1;
+	else
+		return n * factorial(n - 1);
+}
+
+int main() {
+	unsigned long long int fact;
+
+	double sumFactTime = 0;
+	cout << "Input Size\tFinal Value\tTime Taken\n";
+
+	for (int i = 0; i < 13; i++) {
+		auto t1 = high_resolution_clock::now();
+		fact = factorial(i);
+		auto t2 = high_resolution_clock::now();
+		duration<double, milli>diff = t2 - t1;
+		sumFactTime += diff.count();
+
+		cout << setw(5) << i << "\t\t" << setw(9) << fact << "\t" << setw(7) << sumFactTime << endl;
+	}
+	return 0;
+}
+	\end{lstlisting}
+	
+	\subsection*{Console Output}
+\begin{table}[H]
+	\begin{center}
+		\begin{tabular}{|c|c|c|}
+		\hline
+		Input Size  &    Final Value  &   Time Taken\\\hline
+    0  &                 1 &       0.0007\\
+    1  &                 1 &       0.0012\\
+    2  &                 2  &      0.0021\\
+    3   &                6  &      0.0029\\
+    4   &               24  &      0.0036\\
+    5   &              120  &      0.0042\\
+    6   &              720  &      0.0049\\
+    7   &             5040  &      0.0053\\
+    8   &            40320   &     0.0059\\
+    9   &           362880   &     0.0067\\
+   10   &          3628800  &      0.0078\\
+   11   &         39916800  &      0.0085\\
+   12   &        479001600  &      0.0097	\\\hline
+		\end{tabular}\caption{Recursive Factorial Time Analysis}\label{Table 4}
+	\end{center}
+\end{table}
+
+\subsection*{Graphical Evidence}
+\begin{flushleft}
+A graph of input size vs execution time, shows a linear pattern. It is actually of the order $O(n)$. The following script generates the graph.
+\end{flushleft}
+
+\begin{center}
+		\includegraphics{"Recursive Factorial".jpg}
+		\captionof*{"Recursive Factorial".jpg}{Fig 8. \textbf{Recursive Factorial Complexity} $O(n)$}
+	\end{center}
+	
+\end{document}

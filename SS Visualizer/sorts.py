@@ -70,18 +70,18 @@ def quicksort(a, start, end):
         return
 
     pivot = a[end]
-    pivot = start
+    pivotIndex = start
 
     for i in range(start, end):
         if a[i] < pivot:
-            swap(a, i, pivot)
+            swap(a, i, pivotIndex)
             pivot += 1
         yield a
-    swap(a, end, pivot)
+    swap(a, end, pivotIndex)
     yield a
 
-    yield from quicksort(a, start, pivot - 1)
-    yield from quicksort(a, pivot + 1, end)
+    yield from quicksort(a, start, pivotIndex - 1)
+    yield from quicksort(a, pivotIndex + 1, end)
 
 
 def selectionsort(a):
@@ -91,7 +91,7 @@ def selectionsort(a):
     for i in range(len(a)):
         minVal = a[i]
         minIdx = i
-        for j in range(i, len(A)):
+        for j in range(i, len(a)):
             if a[j] < minVal:
                 minVal = a[j]
                 minIdx = j

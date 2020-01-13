@@ -52,9 +52,9 @@ class SSV(tk.Tk):
         elif sort_algo == "Bubble":
             A = sorts.bubblesort(lst)
         elif sort_algo == "Merge":
-            A = sorts.mergesort(lst, lst[0], len(lst) - 1)
+            A = sorts.mergesort(lst, 0, loops - 1)
         elif sort_algo == "Quick":
-            A = sorts.quicksort(lst, lst[0], len(lst) - 1)
+            A = sorts.quicksort(lst, 0, loops - 1)
         elif sort_algo == "Selection":
             A = sorts.selectionsort(lst)
 
@@ -73,8 +73,8 @@ class SSV(tk.Tk):
             iteration[0] += 1
             text.set_text("# of operations: {}".format(iteration[0]))
 
-            canvas = FigureCanvasTkAgg(fig, master=self)
-            canvas.get_tk_widget().place(x=30, y=80)
+        canvas = FigureCanvasTkAgg(fig, master=self)
+        canvas.get_tk_widget().place(x=30, y=80)
 
         anim = animation.FuncAnimation(fig, func=update_fig,
                                        fargs=(bar_rects, iteration), frames=A, interval=1,

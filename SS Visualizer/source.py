@@ -1,62 +1,21 @@
 import tkinter as tk
 from tkinter import *
 from PIL import Image, ImageTk
-
-import sorts
 import random
 import time
+import sorts
+import search
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-
-import matplotlib
-
-matplotlib.use("TkAgg")
-from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
-
-def generate_list(n):
-    lst = []
-    for x in range(pow(2, n)):
-        lst.append(random.randint(1, pow(10, 4)))
-
-    return lst
-
-
-def randomize(lst):
-    random.seed(time.time())
-    random.shuffle(lst)
-
-
-def sort(loops):
-    s = 0.0
-    t1 = time.clock()
-
-    dataset = []
-
-    for x in range(loops):
-        lst = generate_list(pow(2, x))
-
-        if OptionMenu.get() == "Insertion":
-            sorts.insertionsort(lst)
-        elif OptionMenu.get() == "Bubble":
-            sorts.bubblesort(lst)
-        elif OptionMenu.get() == "Merge":
-            sorts.mergesort(lst, lst[0], len(lst) - 1)
-        elif OptionMenu.get() == "Quick":
-            sorts.quicksort(lst, lst[0], len(lst) - 1)
-        elif OptionMenu.get() == "Selection":
-            sorts.selectionsort(lst)
-
-        t2 = time.clock()
-        s += t2 - t1
-
-        dataset.append(tuple(pow(2, x), s))
+from matplotlib.figure import Figure
 
 
 class SSV(tk.Tk):
     def __init__(self, height=None, width=None, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
+        self.width = width
+        self.height = height
         container = tk.Frame(self)
         container.pack(side="top", fill="both", expand=True)
         container.grid_rowconfigure(0, weight=1)
@@ -81,21 +40,64 @@ class SSV(tk.Tk):
         frame.tkraise()
         frame.winfo_toplevel().geometry(res)
 
+    def sort(self, var, loops):
+        sort_algo = var.get()
+
+        lst = [x + 1 for x in range(loops)]
+        random.seed(time.time())
+        random.shuffle(lst)
+
+        if sort_algo == "Insertion":
+            A = sorts.insertionsort(lst)
+        elif sort_algo == "Bubble":
+            A = sorts.bubblesort(lst)
+        elif sort_algo == "Merge":
+            A = sorts.mergesort(lst, lst[0], len(lst) - 1)
+        elif sort_algo == "Quick":
+            A = sorts.quicksort(lst, lst[0], len(lst) - 1)
+        elif sort_algo == "Selection":
+            A = sorts.selectionsort(lst)
+
+        title = sort_algo + " Sort"
+        fig, ax = plt.subplots()
+        ax.set_title(title)
+        bar_rects = ax.bar(range(len(lst)), lst, align="edge")
+        ax.set_xlim(0, len(lst))
+        ax.set_ylim(0, int(1.07 * max(lst)))
+        text = ax.text(0.02, 0.95, "", transform=ax.transAxes)
+        iteration = [0]
+
+        def update_fig(lst, rects, iteration):
+            for rect, val in zip(rects, lst):
+                rect.set_height(val)
+            iteration[0] += 1
+            text.set_text("# of operations: {}".format(iteration[0]))
+
+            canvas = FigureCanvasTkAgg(fig, master=self)
+            canvas.get_tk_widget().place(x=30, y=80)
+
+        anim = animation.FuncAnimation(fig, func=update_fig,
+                                       fargs=(bar_rects, iteration), frames=A, interval=1,
+                                       repeat=False, blit=False)
+        # return anim
+        plt.show()
+
+
+        """def reset():
+            if SearchingVisualizer:
+                SearchingVisualizer.destroy()
+            elif SortingVisualizer:
+                SortingVisualizer.destroy()
+"""
+
 
 class StartPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         label = tk.Label(self, text="Searching & Sorting Algorithm Visualizer \n\nPowered by",
-                         font=("arial", 10, "bold"), bg="powder blue").place(x=25, y=0)
+                         font=("arialloops", 10, "bold"), bg="powder blue").place(x=25, y=0)
         label2 = Label(self, text="Coded by \n\n AwesomenessWithin & 7enTropy7", font=("arial", 10, "bold"),
                        bg="powder blue").place(x=40, y=150)
-
-        # image = Image.open("pyTkinter.jpg")
-        # image = image.resize((35, 35), Image.ANTIALIAS)
-        # photo = ImageTk.PhotoImage(image)
-        # label_img = Label(image=photo)
-        # label_img.image = photo  # keep a reference!
-        # label_img.place(x=135, y=55)
 
         button_sort = tk.Button(self, text="Sorting Visualizer", bg="brown", fg="white", font=("arial", 10, "bold"),
                                 command=lambda: controller.show_frame(SortingVisualizer)).place(x=10, y=100)
@@ -120,7 +122,6 @@ class SortingVisualizer(tk.Frame):
         }
 
         var = tk.StringVar()
-        var.set('Select...')
         p = OptionMenu(self, var, *data, command=self.boxtext)
         p.pack()
 
@@ -128,48 +129,19 @@ class SortingVisualizer(tk.Frame):
         menu.pack(pady=10, padx=10)
 
         button1 = Button(self, text="Back to Home", bg="brown", fg="white",
-                         command=lambda: controller.show_frame(StartPage)).place(x=0, y=0)
+                         command=lambda: controller.show_frame(SortingVisualizer)).place(x=0, y=0)
 
         button2 = Button(self, text="Searching Visualizer", bg="brown", fg="white",
                          command=lambda: controller.show_frame(SearchingVisualizer)).place(x=90, y=0)
 
-        spin = Spinbox(self, from_=0, to=22, width=3, font=("arial", 10, "bold")).place(x=50, y=550)
-
-        button3 = Button(self, text="Randomize Data", bg="brown", fg="white", width=15,
-                         command=lambda: controller.randomize(spin)).place(x=120, y=550)
+        spinner = tk.StringVar()
+        spin = Spinbox(self, from_=0, to=22, width=3, font=("arial", 10, "bold"), textvariable=spinner).place(x=50,
+                                                                                                              y=570)
 
         button4 = Button(self, text="Sort", bg="brown", fg="white", width=10,
-                         command=lambda: controller.sort(spin, p)).place(x=800, y=550)
+                         command=lambda: controller.sort(var, int(spinner.get()))).place(x=800, y=550)
 
-        button5 = Button(self, text="Reset", bg="brown", fg="white", width=10,
-                         command=lambda: controller.reset()).place(x=900, y=550)
-
-        bar_rect = Figure(figsize=(5, 4), dpi=100)
-        plot2 = bar_rect.add_subplot(1, 1, 1)
-
-        plot2.plot(0.5, 0.3, color="blue", marker="o", linestyle="")
-
-        x = [0.1, 0.2, 0.3]
-        y = [-0.1, -0.2, -0.3]
-
-        plot2.plot(x, y, color="blue", marker="x", linestyle="")
-
-        canvas2 = FigureCanvasTkAgg(bar_rect, self)
-        canvas2.get_tk_widget().place(x=750, y=100)
-
-        graph = Figure(figsize=(5, 4), dpi=100)
-        plot1 = graph.add_subplot(1, 1, 1)
-
-        plot1.plot(0.5, 0.3, color="red", marker="o", linestyle="")
-
-        x = [0.1, 0.2, 0.3]
-        y = [-0.1, -0.2, -0.3]
-        plot1.plot(x, y, color="blue", marker="x", linestyle="")
-
-        canvas1 = FigureCanvasTkAgg(graph, self)
-        canvas1.get_tk_widget().place(x=30, y=100)
-
-    def boxtext(self, data):
+    def boxtext(self, data, menu=None):
         yield menu.config(text=data[self], font=("arial", 10, "bold"), bg="powder blue")
 
 
@@ -190,5 +162,4 @@ if __name__ == "__main__":
     root = SSV()
     root.title("Welcome")
     root.resizable(False, False)
-
     root.mainloop()

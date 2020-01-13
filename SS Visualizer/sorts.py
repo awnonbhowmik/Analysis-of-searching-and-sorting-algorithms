@@ -1,100 +1,122 @@
-def swap(a, i, j):
+import random
+import time
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+
+
+# NOTE: Python version >=3.3 is required, due to "yield from" feature.
+
+def swap(A, i, j):
+    """Helper function to swap elements i and j of list A."""
+
     if i != j:
-        a[i], a[j] = a[j], a[i]
+        A[i], A[j] = A[j], A[i]
 
 
-def bubblesort(a):
-    if len(a) == 1:
+def bubblesort(A):
+    """In-place bubble sort."""
+
+    if len(A) == 1:
         return
 
     swapped = True
-    for i in range(len(a) - 1):
+    for i in range(len(A) - 1):
         if not swapped:
             break
         swapped = False
-        for j in range(len(a) - 1 - i):
-            if a[j] > a[j + 1]:
-                swap(a, j, j + 1)
+        for j in range(len(A) - 1 - i):
+            if A[j] > A[j + 1]:
+                swap(A, j, j + 1)
                 swapped = True
-            yield a
+            yield A
 
 
-def insertionsort(a):
-    for i in range(1, len(a)):
+def insertionsort(A):
+    """In-place insertion sort."""
+
+    for i in range(1, len(A)):
         j = i
-        while j > 0 and a[j] < a[j - 1]:
-            swap(a, j, j - 1)
+        while j > 0 and A[j] < A[j - 1]:
+            swap(A, j, j - 1)
             j -= 1
-            yield a
+            yield A
 
 
-def mergesort(a, start, end):
+def mergesort(A, start, end):
+    """Merge sort."""
+
     if end <= start:
         return
 
     mid = start + ((end - start + 1) // 2) - 1
-    yield from mergesort(a, start, mid)
-    yield from mergesort(a, mid + 1, end)
-    yield from merge(a, start, mid, end)
-    yield a
+    yield from mergesort(A, start, mid)
+    yield from mergesort(A, mid + 1, end)
+    yield from merge(A, start, mid, end)
+    yield A
 
 
-def merge(a, start, mid, end):
+def merge(A, start, mid, end):
+    """Helper function for merge sort."""
+
     merged = []
-    left = start
-    right = mid + 1
+    leftIdx = start
+    rightIdx = mid + 1
 
-    while left <= mid and right <= end:
-        if a[left] < a[right]:
-            merged.append(a[left])
-            left += 1
+    while leftIdx <= mid and rightIdx <= end:
+        if A[leftIdx] < A[rightIdx]:
+            merged.append(A[leftIdx])
+            leftIdx += 1
         else:
-            merged.append(a[right])
-            right += 1
+            merged.append(A[rightIdx])
+            rightIdx += 1
 
-    while left <= mid:
-        merged.append(a[left])
-        left += 1
+    while leftIdx <= mid:
+        merged.append(A[leftIdx])
+        leftIdx += 1
 
-    while right <= end:
-        merged.append(a[right])
-        right += 1
+    while rightIdx <= end:
+        merged.append(A[rightIdx])
+        rightIdx += 1
 
     for i, sorted_val in enumerate(merged):
-        a[start + i] = sorted_val
-        yield a
+        A[start + i] = sorted_val
+        yield A
 
 
-def quicksort(a, start, end):
+def quicksort(A, start, end):
+    """In-place quicksort."""
+
     if start >= end:
         return
 
-    pivot = a[end]
-    pivotIndex = start
+    pivot = A[end]
+    pivotIdx = start
 
     for i in range(start, end):
-        if a[i] < pivot:
-            swap(a, i, pivotIndex)
-            pivot += 1
-        yield a
-    swap(a, end, pivotIndex)
-    yield a
+        if A[i] < pivot:
+            swap(A, i, pivotIdx)
+            pivotIdx += 1
+        yield A
+    swap(A, end, pivotIdx)
+    yield A
 
-    yield from quicksort(a, start, pivotIndex - 1)
-    yield from quicksort(a, pivotIndex + 1, end)
+    yield from quicksort(A, start, pivotIdx - 1)
+    yield from quicksort(A, pivotIdx + 1, end)
 
 
-def selectionsort(a):
-    if len(a) == 1:
+def selectionsort(A):
+    """In-place selection sort."""
+    if len(A) == 1:
         return
 
-    for i in range(len(a)):
-        minVal = a[i]
+    for i in range(len(A)):
+        # Find minimum unsorted value.
+        minVal = A[i]
         minIdx = i
-        for j in range(i, len(a)):
-            if a[j] < minVal:
-                minVal = a[j]
+        for j in range(i, len(A)):
+            if A[j] < minVal:
+                minVal = A[j]
                 minIdx = j
-            yield a
-        swap(a, i, minIdx)
-        yield a
+            yield A
+        swap(A, i, minIdx)
+        yield A
